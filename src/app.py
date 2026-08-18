@@ -1,16 +1,16 @@
 import os
+import base64
+import requests
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-import base64
-import requests
 
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 # Define environment variables
 LISTEN_ADDRESS = os.getenv("LISTEN_ADDRESS", "127.0.0.1")
-LISTEN_PORT = os.getenv("LISTEN_PORT", "8080")
+LISTEN_PORT = os.getenv("LISTEN_PORT", "5000")
 RAGNAR_BASE_URL = os.environ["RAGNAR_BASE_URL"]
 
 # Define Ragnar API endpoints 
@@ -103,4 +103,4 @@ def proxy_request():
         return jsonify({"error": "Failed to fetch data from Ragnar", "details": str(e)}), 502
 
 if __name__ == "__main__":
-    app.run(host=LISTEN_ADDRESS, port=LISTEN_PORT, debug=True, threaded=False)
+    app.run(host=LISTEN_ADDRESS, port=LISTEN_PORT, threaded=False)
