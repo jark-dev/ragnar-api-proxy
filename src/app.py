@@ -80,8 +80,6 @@ def proxy_request():
         encoded_credentials = auth_header.split(" ")[1]
         decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8")
         username, password = decoded_credentials.split(":", 1)
-        print(username)
-        print(password)
                
     except Exception:
         return jsonify({"error": "Invalid credentials format"}), 400
