@@ -55,15 +55,15 @@ def create_app(config=None):
 
             # Check for HTTP errors (4xx, 5xx)
             if resp.status_code == 200:
-                return True, None
+                return True, resp.status_code, None
             else:
                 # Return status code and response body for debugging
                 error_detail = f"HTTP {resp.status_code}: {resp.text}"
-                return False, error_detail
+                return False, resp.status_code, error_detail
             
         except requests.exceptions.RequestException as e:
             error_detail = f"Request Exception: {str(e)}"
-            return False, error_detail
+            return False, 500, error_detail
 
     @app.route("/proxy", methods=["GET", "POST"])
     def proxy_request():
@@ -90,10 +90,10 @@ def create_app(config=None):
         # Check RAGNAR_AUTH_CHECK_ENDPOINT to see if already authenticated
         if not is_authenticated():
             # If not, forward credentials to RAGNAR_LOGIN_ENDPOINT and cache cookie
-            success, error_detail = authenticate_ragnar(username, password)
+            success, status_code, error_detail = authenticate_ragnar(username, password)
             if not success:
                 app.logger.error(f"Login failed: {error_detail}")
-                return jsonify({"error": "Ragnar login failed", "details": error_detail}), 401
+                return jsonify({"error": "Ragnar login failed", "details": error_detail}), status_code
 
         # Send GET request to RAGNAR_DATA_ENDPOINT using session cookie to authenticate
         try:
