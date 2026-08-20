@@ -15,7 +15,7 @@ def create_app(config=None):
     load_dotenv(dotenv_path=env_path)
 
     # Define environment variables
-    app.config["LISTEN_ADDRESS"] = os.getenv("LISTEN_ADDRESS", "127.0.0.")
+    app.config["LISTEN_ADDRESS"] = os.getenv("LISTEN_ADDRESS", "127.0.0.1")
     app.config["LISTEN_PORT"] = os.getenv("LISTEN_PORT", "5000")
     app.config["RAGNAR_BASE_URL"] = os.getenv["RAGNAR_BASE_URL", "http://localhost:8000"]
 
