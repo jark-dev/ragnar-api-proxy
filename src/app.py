@@ -75,15 +75,17 @@ def create_app(config=None):
         # Extract username/password from Basic Auth Header
         auth_header = request.headers.get("Authorization")
         
-        if not auth_header or not auth_header.startswith("Basic "):
-            return jsonify({"error": "Missing or invalid Authorization header"}), 400
+        if not auth_header:
+            return jsonify({"error": "Missing Authorization header"}), 401
+        if not auth_header.startswith("Basic "):
+            return jsonify({"error": "Invalid Authorization scheme"}), 401
 
         try:
             encoded_credentials = auth_header.split(" ")[1]
             decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8")
             username, password = decoded_credentials.split(":", 1)
         except Exception:
-            return jsonify({"error": "Invalid credentials format"}), 400
+            return jsonify({"error": "Invalid credentials format"}), 401
         
         # Check RAGNAR_AUTH_CHECK_ENDPOINT to see if already authenticated
         if not is_authenticated():
