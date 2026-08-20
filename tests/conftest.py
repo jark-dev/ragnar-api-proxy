@@ -7,7 +7,7 @@ def app():
     """Create app with test configuration"""
     app = create_app({
         'TESTING': True,
-        'RAGNAR_BASE_URL': 'http://ragnar.test.local',
+        'RAGNAR_BASE_URL': 'https://ragnar.test.local',
     })
     yield app
 

@@ -40,14 +40,14 @@ def test_username_only_auth_header(client):
 def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
     """
     Verify proxy successfully decodes and forwards Basic Auth header
-    1) Verify that mock API returns 200
+    1) Verify that mock API returns 200 and payload
     2) Verify that decoded credentials forwarded to mock API match raw inputs
     """
     # Mock GET /api/auth/status
     # (Return unauthenticated to force login flow)
     mock_ragnar_api.add(
         mock_ragnar_api.GET,
-        "http://ragnar.test.local/api/auth/status",
+        "https://ragnar.test.local/api/auth/status",
         json={"authenticated": False},
         status=200,
     )
@@ -56,7 +56,7 @@ def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
     # (Handle authentication request)
     mock_ragnar_api.add(
         mock_ragnar_api.POST,
-        "http://ragnar.test.local/api/auth/login",
+        "https://ragnar.test.local/api/auth/login",
         json={"status": "authenticated"},
         status=200,
     )
@@ -65,8 +65,8 @@ def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
     # (Return final proxy payload)
     mock_ragnar_api.add(
         mock_ragnar_api.GET,
-        "http://ragnar.test.local/api/status",
-        json={"status": "ok"},
+        "https://ragnar.test.local/api/status",
+        json={"status": "ok"}, # placeholder for actual API data
         status=200,
     )
 
@@ -81,14 +81,63 @@ def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
     )
 
     assert response.status_code == 200
+    assert response.get_json() == {"status": "ok"}
 
     # Extract the authentication POST request made to mock API
     login_call = next(
     call for call in mock_ragnar_api.calls 
-    if call.request.url == "http://ragnar.test.local/api/auth/login"
+    if call.request.url == "https://ragnar.test.local/api/auth/login"
     )
 
     # Verify that decoded base64 credentials match raw credentials
     payload = json.loads(login_call.request.body)
     assert payload["username"] == raw_username
     assert payload["password"] == raw_password
+
+def test_creds_not_sent_if_already_authenticated(client, mock_ragnar_api):
+    """
+    Test proxy workflow when session is already authenticated via session cookie
+    1) Verify mock API returns status 200 and payload
+    2) Verify client credentials are not forwarded to mock API
+    """
+    # Mock GET /api/auth/status
+    # (Return authenticated to bypass login flow)
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/auth/status",
+        json={"authenticated": True},
+        status=200,
+    )
+
+    # Mock GET /api/status
+    # (Return final proxy payload)
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/status",
+        json={"status": "ok"}, # placeholder for actual API data
+        status=200,
+    )
+
+    username = "username"
+    password = "password"
+    credentials = f"{username}:{password}"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {encoded_credentials}"}
+    )
+
+    # Verify response status code and payload received
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "ok"}
+
+    # Verify authentication POST request was not made to mock API
+    login_call = next(
+        (
+            call for call in mock_ragnar_api.calls 
+            if call.request.url == "https://ragnar.test.local/api/auth/login"
+        ),
+        None
+    )
+    assert login_call is None
