@@ -85,8 +85,8 @@ def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
 
     # Extract the authentication POST request made to mock API
     login_call = next(
-    call for call in mock_ragnar_api.calls 
-    if call.request.url == "https://ragnar.test.local/api/auth/login"
+        call for call in mock_ragnar_api.calls 
+        if call.request.url == "https://ragnar.test.local/api/auth/login"
     )
 
     # Verify that decoded base64 credentials match raw credentials
@@ -118,9 +118,7 @@ def test_creds_not_sent_if_already_authenticated(client, mock_ragnar_api):
         status=200,
     )
 
-    username = "username"
-    password = "password"
-    credentials = f"{username}:{password}"
+    credentials = "username:password"
     encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     response = client.get(
@@ -133,11 +131,45 @@ def test_creds_not_sent_if_already_authenticated(client, mock_ragnar_api):
     assert response.get_json() == {"status": "ok"}
 
     # Verify authentication POST request was not made to mock API
-    login_call = next(
-        (
-            call for call in mock_ragnar_api.calls 
-            if call.request.url == "https://ragnar.test.local/api/auth/login"
-        ),
-        None
+    login_call = any(
+        call for call in mock_ragnar_api.calls 
+        if call.request.url == "https://ragnar.test.local/api/auth/login"
     )
-    assert login_call is None
+    assert not login_call
+
+def test_invalid_login_credentials(client, mock_ragnar_api):
+    """Verify proxy returns 401 when invalid credentials are provided"""
+    # Mock GET /api/auth/status
+    # (Return unauthenticated to force login flow)
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/auth/status",
+        json={"authenticated": False},
+        status=200,
+    )
+
+    # Mock POST /api/auth/login
+    # (Return 401 Unauthorized)
+    ragnar_error_message = "Invalid username or password"
+    mock_ragnar_api.add(
+        mock_ragnar_api.POST,
+        "https://ragnar.test.local/api/auth/login",
+        body=ragnar_error_message,
+        status=401,
+    )
+
+    credentials = "bad_username:bad_password"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {encoded_credentials}"}
+    )
+
+    # Verify 401 status code and error message are returned
+    assert response.status_code == 401
+
+    data = response.get_json()
+    assert data["error"] == "Ragnar login failed"
+    assert "HTTP 401" in data["details"]
+    assert ragnar_error_message in data["details"]
