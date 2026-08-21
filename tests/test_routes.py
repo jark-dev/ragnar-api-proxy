@@ -174,7 +174,7 @@ def test_invalid_login_credentials(client, mock_ragnar_api):
     assert "HTTP 401" in data["details"]
     assert ragnar_error_message in data["details"]
 
-def test_ragnar_unreachable(client, mock_ragnar_api):
+def test_ragnar_auth_unreachable(client, mock_ragnar_api):
     """
     Verify proxy returns 500 when proxy is unable to authenticate because Ragnar is unreachable
     (e.g. server down, DNS resolution issue, timeout)
@@ -197,9 +197,40 @@ def test_ragnar_unreachable(client, mock_ragnar_api):
     encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     response = client.get(
-        "proxy",
+        "/proxy",
         headers={"Authorization": f"Basic {encoded_credentials}"}
     )
 
     assert response.status_code == 500
     assert "Ragnar login failed" in response.get_json()["error"]
+
+def test_ragnar_data_unreachable(client, mock_ragnar_api):
+    """
+    Verify proxy returns 502 when proxy is authenticated but Ragnar data endpoint is unreachable
+    (e.g. server down, DNS resolution issue, timeout)
+    """
+    # Simulate proxy session already authenticated
+    # (assume /api/auth/status is reachable but /api/status is not)
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/auth/status",
+        json={"authenticated": True},
+        status=200,
+    )
+    # Simulate /api/status endpoint unreachable
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/status",
+        body=requests.exceptions.ConnectTimeout("Host unreachable"),
+    )
+
+    credentials = "username:password"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {encoded_credentials}"}
+    )
+
+    assert response.status_code == 502
+    assert "Failed to fetch data from Ragnar" in response.get_json()["error"]
