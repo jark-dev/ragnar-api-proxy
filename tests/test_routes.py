@@ -206,7 +206,7 @@ def test_ragnar_auth_unreachable(client, mock_ragnar_api):
 
 def test_ragnar_data_unreachable(client, mock_ragnar_api):
     """
-    Verify proxy returns 502 when proxy is authenticated but Ragnar data endpoint is unreachable
+    Verify proxy returns 502 when authenticated but Ragnar data endpoint is unreachable
     (e.g. server down, DNS resolution issue, timeout)
     """
     # Simulate proxy session already authenticated
@@ -234,3 +234,36 @@ def test_ragnar_data_unreachable(client, mock_ragnar_api):
 
     assert response.status_code == 502
     assert "Failed to fetch data from Ragnar" in response.get_json()["error"]
+
+def test_ragnar_application_error(client, mock_ragnar_api):
+    """
+    Verify proxy returns 500 when authenticated but Ragnar
+    data endpoint returns application error
+    """
+    # Simulate proxy session already authenticated
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/auth/status",
+        json={"authenticated": True},
+        status=200,
+    )
+    # Simulate /api/status endpoint returns 500
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/status",
+        json={"error": "Internal application error"},
+        status=500
+    )
+
+    credentials = "username:password"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {encoded_credentials}"}
+    )
+
+    assert response.status_code == 502
+    data = response.get_json()
+    assert "Failed to fetch data from Ragnar" in data["error"]
+    assert "500" in data["details"]
