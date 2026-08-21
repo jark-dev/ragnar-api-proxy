@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 
 def create_app(config=None):
-
     # Initialize Flask app
     app = Flask(__name__)
 
@@ -69,7 +68,6 @@ def create_app(config=None):
         Receives username/password from requester, forwards to Ragnar, stores session cookie,
         and returns Ragnar API response JSON to requester.
         """
-
         # Extract username/password from Basic Auth Header
         auth_header = request.headers.get("Authorization")
         
