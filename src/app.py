@@ -31,7 +31,6 @@ def create_app(config=None):
         Checks RAGNAR_AUTH_CHECK_ENDPOINT using global session.
         Returns True if authentication is confirmed
         """
-
         try:
             resp = ragnar_session.get(f"{app.config['RAGNAR_BASE_URL']}/api/auth/status")
             if resp.status_code == 200:
@@ -46,7 +45,6 @@ def create_app(config=None):
         Forwards username/password to RAGNAR_LOGIN_ENDPOINT using global session.
         Session object captures and stores Set-Cookie header
         """
-
         try:
             resp = ragnar_session.post(
                 f"{app.config['RAGNAR_BASE_URL']}/api/auth/login",
