@@ -1,5 +1,5 @@
 import pytest
-import responses
+import requests
 import base64
 import json
 
@@ -173,3 +173,33 @@ def test_invalid_login_credentials(client, mock_ragnar_api):
     assert data["error"] == "Ragnar login failed"
     assert "HTTP 401" in data["details"]
     assert ragnar_error_message in data["details"]
+
+def test_ragnar_unreachable(client, mock_ragnar_api):
+    """
+    Verify proxy returns 500 when proxy is unable to authenticate because Ragnar is unreachable
+    (e.g. server down, DNS resolution issue, timeout)
+    """
+    # Simulate /api/auth/status endpoint unreachable
+    mock_ragnar_api.add(
+        mock_ragnar_api.GET,
+        "https://ragnar.test.local/api/auth/status",
+        body=requests.exceptions.ConnectTimeout("Host unreachable"),
+    )
+    # If auth status check fails, proxy will attempt to authenticate
+    # Simulate /api/auth/login endpoint unreachable
+    mock_ragnar_api.add(
+        mock_ragnar_api.POST,
+        "https://ragnar.test.local/api/auth/login",
+        body=requests.exceptions.ConnectTimeout("Host unreachable"),
+    )
+
+    credentials = "username:password"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "proxy",
+        headers={"Authorization": f"Basic {encoded_credentials}"}
+    )
+
+    assert response.status_code == 500
+    assert "Ragnar login failed" in response.get_json()["error"]
