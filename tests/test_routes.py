@@ -37,6 +37,54 @@ def test_username_only_auth_header(client):
     assert response.status_code == 401
     assert response.json["error"] == "Invalid credentials format"
 
+def test_missing_scheme_prefix(client):
+    """Verify proxy returns 401 if Auth header is missing scheme prefix"""
+    credentials = base64.b64encode("username:password".encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"{credentials}"}
+    )
+
+    assert response.status_code ==  401
+    assert response.json["error"] == "Invalid Authorization scheme"
+
+def test_non_encoded_credentials(client):
+    """Verify proxy returns 401 if credentials are not base64 encoded"""
+    credentials = "username:password"
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {credentials}"}
+    )
+
+    assert response.status_code ==  401
+    assert response.json["error"] == "Invalid credentials format"
+
+def test_empty_credentials(client):
+    """Verify proxy returns 401 if Auth header is missing credentials"""
+    credentials = base64.b64encode("username:password".encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": "Basic "}
+    )
+
+    assert response.status_code ==  401
+    assert response.json["error"] == "Invalid credentials format"
+
+def test_missing_colon_separator_in_credentials(client):
+    """Verify proxy returns 401 if username and password are not colon-separated"""
+    credentials = base64.b64encode("usernamepassword".encode("utf-8")).decode("utf-8")
+
+    response = client.get(
+        "/proxy",
+        headers={"Authorization": f"Basic {credentials}"}
+    )
+
+    assert response.status_code ==  401
+    assert response.json["error"] == "Invalid credentials format"
+
 def test_decode_and_forward_basic_auth(client, mock_ragnar_api):
     """
     Verify proxy successfully decodes and forwards Basic Auth header
