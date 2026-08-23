@@ -17,13 +17,16 @@ __pycache__/
 .env.*
 !.env.example
 
+# Docker Compose files
+*compose*.yml
+*compose*.yaml
+
 # Testing
 tests/
 .pytest_cache/
 
 # Templates and documentation
-deploy/
-compose.yml*
+compose.yml.example
 Dockerfile
 .dockerignore
 README.md
