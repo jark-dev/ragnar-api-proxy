@@ -1,0 +1,29 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+
+# Python caches and local virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Testing
+tests/
+.pytest_cache/
+
+# Templates and documentation
+deploy/
+compose.yml*
+Dockerfile
+.dockerignore
+README.md
