@@ -1,5 +1,13 @@
+# IDE
+.vscode/
+
+# Python caches and venv
 .venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
-.env
 .pytest_cache/
+
+# Local secrets
+.env
