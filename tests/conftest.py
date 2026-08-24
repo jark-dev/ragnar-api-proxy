@@ -1,6 +1,8 @@
 import pytest
-from src.app import create_app
 import responses
+
+from src.app import create_app
+
 
 @pytest.fixture
 def app():

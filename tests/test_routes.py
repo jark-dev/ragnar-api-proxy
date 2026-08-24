@@ -1,7 +1,8 @@
-import pytest
-import requests
 import base64
 import json
+
+import requests
+
 
 def test_missing_auth_header(client):
     """Verify proxy returns 401 if requester does not send any Auth header"""
@@ -27,7 +28,7 @@ def test_username_only_auth_header(client):
     Verify proxy returns 401 if requester sends username-only Basic Auth header
     (e.g. if sending API key via Basic auth instead of username:password)
     """
-    credentials = base64.b64encode("username".encode("utf-8")).decode("utf-8")
+    credentials = base64.b64encode(b"username").decode("utf-8")
 
     response = client.get(
         "/proxy",
@@ -39,7 +40,7 @@ def test_username_only_auth_header(client):
 
 def test_missing_scheme_prefix(client):
     """Verify proxy returns 401 if Auth header is missing scheme prefix"""
-    credentials = base64.b64encode("username:password".encode("utf-8")).decode("utf-8")
+    credentials = base64.b64encode(b"username:password").decode("utf-8")
 
     response = client.get(
         "/proxy",
@@ -63,7 +64,6 @@ def test_non_encoded_credentials(client):
 
 def test_empty_credentials(client):
     """Verify proxy returns 401 if Auth header is missing credentials"""
-    credentials = base64.b64encode("username:password".encode("utf-8")).decode("utf-8")
 
     response = client.get(
         "/proxy",
@@ -75,7 +75,7 @@ def test_empty_credentials(client):
 
 def test_missing_colon_separator_in_credentials(client):
     """Verify proxy returns 401 if username and password are not colon-separated"""
-    credentials = base64.b64encode("usernamepassword".encode("utf-8")).decode("utf-8")
+    credentials = base64.b64encode(b"usernamepassword").decode("utf-8")
 
     response = client.get(
         "/proxy",
