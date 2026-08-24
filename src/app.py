@@ -82,7 +82,7 @@ def create_app(config=None):
             encoded_credentials = auth_header.split(" ")[1]
             decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8")
             username, password = decoded_credentials.split(":", 1)
-        except Exception:
+        except (ValueError, TypeError):
             return jsonify({"error": "Invalid credentials format"}), 401
         
         # Check RAGNAR_AUTH_CHECK_ENDPOINT to see if already authenticated
