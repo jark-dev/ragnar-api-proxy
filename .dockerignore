@@ -24,6 +24,7 @@ __pycache__/
 # Testing
 tests/
 .pytest_cache/
+requirements-dev.txt
 
 # Templates and documentation
 compose.yml.example
