@@ -5,7 +5,7 @@
 # IDE
 .vscode/
 
-# Python caches and local virtual environments
+# Python caches and local environments
 .venv/
 venv/
 env/
@@ -17,17 +17,20 @@ __pycache__/
 .env.*
 !.env.example
 
-# Docker Compose files
+# Local Docker Compose files
 *compose*.yml
 *compose*.yaml
+
+# Docker build
+Dockerfile
+.dockerignore
 
 # Testing
 tests/
 .pytest_cache/
 requirements-dev.txt
 
-# Templates and documentation
-compose.yml.example
-Dockerfile
-.dockerignore
-README.md
+# Examples and documentation
+examples/
+*.md
+!README.md
