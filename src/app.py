@@ -1,9 +1,11 @@
-import os
 import base64
-import requests
+import os
 from pathlib import Path
+
+import requests
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
+
 
 def create_app(config=None):
     # Initialize Flask app
@@ -59,7 +61,7 @@ def create_app(config=None):
                 return False, resp.status_code, error_detail
             
         except requests.exceptions.RequestException as e:
-            error_detail = f"Request Exception: {str(e)}"
+            error_detail = f"Request Exception: {e!r}"
             return False, 500, error_detail
 
     @app.route("/proxy", methods=["GET", "POST"])
