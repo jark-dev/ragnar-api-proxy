@@ -33,15 +33,15 @@ This authentication flow is incompatible with stateless clients such as Homepage
 │   └── app.py                          # Main entrypoint
 ├── tests
 │   ├── __init__.py
-│   ├── conftest.py                      # Pytest fixtures
-│   └── test_routes.py                   # Main test module
-├── Dockerfile                           # Docker image definition
-├── gunicorn.conf.py                     # Gunicorn configuration
-├── README.md                            # Documentation
-├── requirements-dev.txt                 # Python dependencies (development/testing)
-├── requirements.txt                     # Python dependencies (production)
-├── .dockerignore                        # Docker image build context exclusions
-└── .env.example                         # Sample environment variables
+│   ├── conftest.py                     # Pytest fixtures
+│   └── test_routes.py                  # Main test module
+├── Dockerfile                          # Docker image definition
+├── gunicorn.conf.py                    # Gunicorn configuration
+├── README.md                           # Documentation
+├── requirements-dev.txt                # Python dependencies (development/testing)
+├── requirements.txt                    # Python dependencies (production)
+├── .dockerignore                       # Docker image build context exclusions
+└── .env.example                        # Sample environment variables
 ```
 
 ## Installation
@@ -90,7 +90,7 @@ Update `RAGNAR_BASE_URL` to reflect your setup. Be sure to include the leading `
 RAGNAR_BASE_URL=http://ragnar.example.org:8000
 ```
 
-If using Ragnar with a custom HTTPS certificate, uncomment `REQUESTS_CA_BUNDLE` and set its value to the path of your custom certificate chain (including the CA certificate and leaf certificate).
+If using Ragnar with a custom HTTPS certificate, uncomment `REQUESTS_CA_BUNDLE` and set its value to the path of your custom certificate chain (including the CA certificate and leaf certificate). If using HTTP or a non-custom HTTPS certificate (e.g. Let's Encrypt), leave `REQUESTS_CA_BUNDLE` commented out (or delete it).
 
 ```env
 #.env
