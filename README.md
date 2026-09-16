@@ -48,20 +48,20 @@ This authentication flow is incompatible with stateless clients such as Homepage
 
 ### Method 1: Docker Compose (Recommended)
 
-**Step 0: Create Directory for Ragnar API Proxy**
+#### Step 0: Create Directory for Ragnar API Proxy
 
 ```bash
 mkdir /opt/ragnar-api-proxy
 cd /opt/ragnar-api-proxy
 ```
 
-**Step 1: Clone Repository**
+#### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/jark-dev/ragnar-api-proxy.git
 ```
 
-**Step 2: Configure Environment Variables**
+#### Step 2: Configure Environment Variables
 
 Copy `.env.example` to `.env`.
 
@@ -71,22 +71,25 @@ cp .env.example .env
 
 If deploying alongside the client service (e.g. Homepage) in a single Docker stack, `LISTEN_ADDRESS` should be set to `0.0.0.0` so that Ragnar API Proxy is accessible over the Docker network. This configuration also supports cases where the client service runs outside the Docker network.
 
+> [!NOTE]
+> **This listen address applies only to the Flask app running inside the Docker container. The listen address of the Docker container is specified in the Compose file via the `expose` or `ports` attributes (next section).**
+
 ```env
-#.env
+# .env
 LISTEN_ADDRESS=0.0.0.0
 ```
 
 The default `LISTEN_PORT` of `5000` works fine for most setups, but this can be modified if desired.
 
 ```env
-#.env
+# .env
 LISTEN_PORT=5000
 ```
 
-Update `RAGNAR_BASE_URL` to reflect your setup. Be sure to include the leading `http://` or `https://` and the trailing port (e.g. `:8000`) if your setup does not use standard HTTP(S) ports (80 for HTTP and 443 for HTTPS). Port 8000 is standard for most Ragnar installations. Do not include a trailing slash.
+Update `RAGNAR_BASE_URL` to reflect your setup. Be sure to include the leading `http://` or `https://`. Also include the trailing port (e.g. `:8000`) if your setup does not use standard HTTP(S) ports (80 for HTTP and 443 for HTTPS). Port 8000 is standard for most Ragnar installations. Do not include a trailing slash.
 
 ```env
-#.env
+# .env
 RAGNAR_BASE_URL=http://ragnar.example.org:8000
 ```
 
@@ -96,6 +99,36 @@ If using Ragnar with a custom HTTPS certificate, uncomment `REQUESTS_CA_BUNDLE` 
 #.env
 RAGNAR_BASE_URL=https://ragnar.example.org:8000
 REQUESTS_CA_BUNDLE=/path/to/custom-ca-chain.pem
+```
+
+#### Step 3: Configure Compose File
+
+Copy the appropriate Compose file example from the `/examples` subdirectory to the root of the working directory as `compose.yml`.
+
+For deployment alongside Homepage in a single Compose file, copy the `compose-homepage.yml` example.
+
+```bash
+cp ./examples/compose-homepage.yml compose.yml
+```
+
+Replace the `homepage` section in the `services` block with your configuration.
+
+```yaml
+# compose.yml
+compose-homepage.yml
+```
+
+For standalone deployment, copy the `compose-standalone.yml` example.
+
+```bash
+cp ./examples/compose-standalone.yml compose.yml
+```
+
+By default, the container will listen only on `localhost`, which is preferred when the client is running on the same host. If the client runs on a remote host, replace the leading `127.0.0.1` in the `ports` attribute with the desired listen address (e.g. 0.0.0.0 or a specific address).
+
+```yaml
+# compose.yml
+compose-standalone.yml
 ```
 
 ### Method 2: Build from Source
