@@ -1,0 +1,10 @@
+services:
+  ragnar-api-proxy:
+    build: .
+    container_name: ragnar-api-proxy
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${LISTEN_PORT}:${LISTEN_PORT}" # use when client runs on local host
+    #  - "${LISTEN_PORT}:${LISTEN_PORT}" # use when client runs on remote host
