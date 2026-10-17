@@ -338,3 +338,9 @@ Currently, official configuration documentation only exists for Homepage, but Ra
 2. Configure environment file with Ragnar login credentials
 3. Specify fields to request from Ragnar's `/api/status` endpoint
     - E.g. Level, Scanned Networks, Targets, Vulnerability Count, etc.
+
+## Planned Updates
+
+- Add dedicated API endpoint for health checks
+- Create Docker image for faster initial deployment
+- Add documentation for other services (e.g. Homarr, Dashy, Heimdall, etc.)
