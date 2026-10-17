@@ -144,14 +144,14 @@ docker compose up -d
 
 ### Method 2: Build from Source
 
-#### Step 0: Create Directory for Ragnar API Proxy
+#### Step 0: Create Working Directory
 
 ```bash
 mkdir /opt/ragnar-api-proxy
 cd /opt/ragnar-api-proxy
 ```
 
-#### Step 1: Clone Repository
+#### Step 1: Clone Repository to Working Directory
 
 ```bash
 git clone https://github.com/jark-dev/ragnar-api-proxy.git
@@ -271,9 +271,70 @@ systemctl status ragnar-api-proxy.service  # verify service started successfully
 
 ### Homepage
 
+#### Step 0: Create New 'customapi' Service for Ragnar
+
+Create a new entry in `services.yaml` for Ragnar using the template below. Update the Ragnar & Ragnar API Proxy URLs to reflect your configuration.
+
+> [!NOTE]
+> **The `href` and `ping` fields should point to your Ragnar instance, and `url` should point to your Ragnar API Proxy instance.**
+
+```yaml
+# /path/to/homepage/config/services.yaml
+- Ragnar:
+    icon: https://raw.githubusercontent.com/PierreGode/Ragnar/refs/heads/main/resources/images/static/ragnar1.bmp
+    href: http://<RAGNAR_IP_or_FQDN>:8000  # update per your setup
+    description: Internal network monitoring system
+    ping: <RAGNAR_IP_or_FQDN>  # update per your setup
+    widget:
+      type: customapi
+      url: http://<RAGNAR_API_PROXY_IP_or_FQDN>:5000/proxy  # update IP/FQDN and port per your setup
+      username: "{{HOMEPAGE_VAR_RAGNAR_USERNAME}}"
+      password: "{{HOMEPAGE_VAR_RAGNAR_PASSWORD}}"
+      mappings:
+        - field: level
+          label: Level
+        - field: scanned_network_count
+          label: Scanned Networks
+        - field: target_count
+          label: Targets
+        - field: vulnerability_count
+          label: Vulnerabilities
+```
+
+The configuration above is just an example, but the mappings can be replaced with any field that is available in Ragnar's `/api/status` endpoint. For a complete list of available fields, navigate to `http://<RAGNAR_IP_or_FQDN>:8000/api/status` in your web browser.
+
+#### Step 1: Configure Homepage Environment Variables
+
+Add Ragnar login credentials to the Homepage `.env` file **(NOT THE RAGNAR API PROXY `.env` FILE)**.
+
+```text
+# /path/to/homepage/.env
+HOMEPAGE_VAR_RAGNAR_USERNAME=your_username
+HOMEPAGE_VAR_RAGNAR_PASSWORD=your_password
+```
+
+#### Step 2: Restart Homepage
+
+Homepage must be restarted to apply updates to the environment variables.
+
+If running Homepage via Docker:
+
+```bash
+docker compose down && docker compose up -d
+```
+
+If running Homepage via systemd service:
+
+```bash
+systemctl restart homepage.service  # update service name as appropriate
+```
+
 ### Other Services
 
 Currently, official configuration documentation only exists for Homepage, but Ragnar API Proxy is compatible with any service that uses HTTP Basic Auth headers to access external APIs. The high-level configuration steps are as follows:
 
 1. Point the service to Ragnar API Proxy's endpoint
     - Default: `http://ragnar.example.org:8000/proxy`
+2. Configure environment file with Ragnar login credentials
+3. Specify fields to request from Ragnar's `/api/status` endpoint
+    - E.g. Level, Scanned Networks, Targets, Vulnerability Count, etc.
