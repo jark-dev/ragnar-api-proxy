@@ -27,7 +27,7 @@ This authentication flow is incompatible with stateless clients such as Homepage
 │   │   ├── compose-standalone.yml      # Standalone Docker deployment
 │   │   └── compose-homepage.yml        # Docker deployment alongside Homepage
 │   └── systemd
-│       └── ragnar-api-proxy.service    # Systemd unit file for non-Docker deployment
+│       └── ragnar-api-proxy.service    # Systemd service file for non-Docker deployment
 ├── src
 │   ├── __init__.py
 │   └── app.py                          # Main entrypoint
@@ -86,7 +86,7 @@ The default `LISTEN_PORT` of `5000` works fine for most setups, but this can be 
 LISTEN_PORT=5000
 ```
 
-Update `RAGNAR_BASE_URL` to reflect your setup. Be sure to include the leading `http://` or `https://`. Also include the trailing port (e.g. `:8000`) if your setup does not use standard HTTP(S) ports (80 for HTTP and 443 for HTTPS). Port 8000 is standard for most Ragnar installations. Do not include a trailing slash.
+Update `RAGNAR_BASE_URL`. Be sure to include the leading `http://` or `https://`. Also include the trailing port (e.g. `:8000`) if your setup does not use standard HTTP(S) ports (80 for HTTP and 443 for HTTPS). Port 8000 is standard for most Ragnar installations. Do not include a trailing slash.
 
 ```env
 # .env
@@ -100,6 +100,9 @@ If using Ragnar with a custom HTTPS certificate, uncomment `REQUESTS_CA_BUNDLE` 
 RAGNAR_BASE_URL=https://ragnar.example.org:8000
 REQUESTS_CA_BUNDLE=/path/to/custom-ca-chain.pem
 ```
+
+> [!IMPORTANT]
+> **If the client service runs on a remote host, it is strongly recommended to use HTTPS as HTTP Basic Auth transmits Ragnar login credentials in base64-encoded cleartext (i.e. unencrypted). If HTTP absolutely must be used, it is highly recommended to run Ragnar API proxy and the client service on the same host to minimize the potential attack surface.**
 
 #### Step 3: Configure Compose File
 
@@ -140,6 +143,129 @@ docker compose up -d
 ```
 
 ### Method 2: Build from Source
+
+#### Step 0: Create Directory for Ragnar API Proxy
+
+```bash
+mkdir /opt/ragnar-api-proxy
+cd /opt/ragnar-api-proxy
+```
+
+#### Step 1: Clone Repository
+
+```bash
+git clone https://github.com/jark-dev/ragnar-api-proxy.git
+```
+
+#### Step 2: Create and Activate Virtual Environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+#### Step 3: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### Step 4: Configure Environment Variables
+
+Copy `.env.example` to `.env`.
+
+```bash
+cp .env.example .env
+```
+
+Configure the `LISTEN_ADDRESS` according to the desired setup:
+
+| Location of Client Service    | `LISTEN_ADDRESS`                   |
+|-------------------------------|------------------------------------|
+| Same host as Ragnar API Proxy | `127.0.0.1`                        |
+| Remote host                   | `0.0.0.0` (or specific IP address) |
+
+```env
+# .env
+LISTEN_ADDRESS=0.0.0.0
+```
+
+The default `LISTEN_PORT` of `5000` works fine for most setups, but this can be modified if desired.
+
+```env
+# .env
+LISTEN_PORT=5000
+```
+
+Update `RAGNAR_BASE_URL`. Be sure to include the leading `http://` or `https://`. Also include the trailing port (e.g. `:8000`) if your setup does not use standard HTTP(S) ports (80 for HTTP and 443 for HTTPS). Port 8000 is standard for most Ragnar installations. Do not include a trailing slash.
+
+```env
+# .env
+RAGNAR_BASE_URL=http://ragnar.example.org:8000
+```
+
+If using Ragnar with a custom HTTPS certificate, uncomment `REQUESTS_CA_BUNDLE` and set its value to the path of your custom certificate chain (including the CA certificate and leaf certificate). If using HTTP or a non-custom HTTPS certificate (e.g. Let's Encrypt), leave `REQUESTS_CA_BUNDLE` commented out (or delete it).
+
+```env
+#.env
+RAGNAR_BASE_URL=https://ragnar.example.org:8000
+REQUESTS_CA_BUNDLE=/path/to/custom-ca-chain.pem
+```
+
+> [!IMPORTANT]
+> **If the client service runs on a remote host, it is strongly recommended to use HTTPS as HTTP Basic Auth transmits Ragnar login credentials in base64-encoded cleartext (i.e. unencrypted). If HTTP absolutely must be used, it is highly recommended to run Ragnar API proxy and the client service on the same host to minimize the potential attack surface.**
+
+#### Step 5: Start Ragnar API Proxy
+
+Ragnar API Proxy can be executed in the command line via the following command:
+
+```bash
+gunicorn "src.app:create_app()"
+```
+
+#### Step 6 (Optional): Run Ragnar API Proxy as a systemd Service
+
+The command above works fine for testing, but for production, it is recommended (and more convenient) to run Ragnar API Proxy as a daemon. This can be achieved by creating a systemd unit. Copy the systemd service file example to `/etc/systemd/system`.
+
+```bash
+cp ./examples/systemd/ragnar-api-proxy.service /etc/systemd/system/ragnar-api-proxy.service
+```
+
+The default service file works out of the box, assuming that the working directory is `/opt/ragnar-api-proxy`. If a custom working directory was used, replace all instances of `/opt/ragnar-api-proxy` with the appropriate path in `WorkingDirectory=` and `ExecStart=`.
+
+Additionally, the service will run as `www-data` by default. This is appropriate for systems where Ragnar API Proxy is the only application running as this user. If the system has other applications also running as `www-data`, consider creating a dedicated user for Ragnar API Proxy to maximize isolation. Replace `www-data` with the custom user in `User=` and `Group=`.
+
+```text
+# /etc/systemd/system/ragnar-api-proxy.service
+[Unit]
+Description=Gunicorn instance serving Ragnar API Proxy
+After=network.target
+
+[Service]
+User=your-username
+Group=your-username
+WorkingDirectory=/path/to/ragnar-api-proxy
+ExecStart=/path/to/ragnar-api-proxy/.venv/bin/gunicorn --config /path/to/ragnar-api-proxy/gunicorn.conf.py "src.app:create_app()"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Ensure the configured user has read permissions for the working directory. The easiest way to achieve this is to recursively `chown` the working directory. Remember to update the user and group name to the custom user if the default `www-data` is not used.
+
+```bash
+chown -R www-data:www-data /opt/ragnar-api-proxy
+```
+
+Enable and start the service.
+
+```bash
+systemctl daemon-reload
+systemctl enable ragnar-api-proxy.service
+systemctl start ragnar-api-proxy.service
+systemctl status ragnar-api-proxy.service  # verify service started successfully
+```
 
 ## Configuration
 
