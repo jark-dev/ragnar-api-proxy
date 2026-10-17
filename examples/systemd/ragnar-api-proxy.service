@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance serving Ragnar API Proxy
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/ragnar-api-proxy
+ExecStart=/opt/ragnar-api-proxy/.venv/bin/gunicorn --config /opt/ragnar-api-proxy/gunicorn.conf.py "src.app:create_app()"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
