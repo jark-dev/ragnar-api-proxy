@@ -118,8 +118,30 @@ Replace the `homepage` section in the `services` block with your configuration.
 
 ```yaml
 # compose.yml
-compose-homepage.yml
-```
+services:
+  ragnar-api-proxy:
+    build: .
+    container_name: ragnar-api-proxy
+    env_file:
+      - .env
+    restart: unless-stopped
+    expose:
+      - ${LISTEN_PORT}
+
+  homepage:
+    ### REPLACE WITH YOUR HOMEPAGE CONFIGURATION ###
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: gethomepage.dev # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      PUID: 1000 # optional, your user id
+      PGID: 1000 # optional, your group id
+    ports:
+      - 3000:3000
+    volumes:
+      - /path/to/config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
+    restart: unless-stopped```
 
 For standalone deployment, copy the `compose-standalone.yml` example.
 
@@ -127,11 +149,20 @@ For standalone deployment, copy the `compose-standalone.yml` example.
 cp ./examples/compose-standalone.yml compose.yml
 ```
 
-By default, the container will listen only on `localhost`, which is preferred when the client is running on the same host. If the client runs on a remote host, replace the leading `127.0.0.1` in the `ports` attribute with the desired listen address (e.g. 0.0.0.0 or a specific address).
+By default, the container will listen only on `localhost`, which is preferred when the client is running on the same host. If the client runs on a remote host, either replace the leading `127.0.0.1` in the `ports` attribute with the desired listen address, or delete this line and uncomment the line below, which listens on all addresses.
 
 ```yaml
 # compose.yml
-compose-standalone.yml
+services:
+  ragnar-api-proxy:
+    build: .
+    container_name: ragnar-api-proxy
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${LISTEN_PORT}:${LISTEN_PORT}" # use when client runs on local host
+    #  - "${LISTEN_PORT}:${LISTEN_PORT}" # uncomment and use when client runs on remote host
 ```
 
 #### Step 4: Start Ragnar API Proxy
