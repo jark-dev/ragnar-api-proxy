@@ -6,7 +6,7 @@ services:
       - .env
     restart: unless-stopped
     expose:
-      - ${LISTEN_PORT} # use when client (e.g. Homepage) runs on local host
+      - ${LISTEN_PORT}
 
   homepage:
     ### REPLACE WITH YOUR HOMEPAGE CONFIGURATION ###
