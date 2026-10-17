@@ -69,7 +69,7 @@ Copy `.env.example` to `.env`.
 cp .env.example .env
 ```
 
-If deploying alongside the client service (e.g. Homepage) in a single Docker stack, `LISTEN_ADDRESS` should be set to `0.0.0.0` so that Ragnar API Proxy is accessible over the Docker network. This configuration also supports cases where the client service runs outside the Docker network.
+For all Docker deployments, `LISTEN_ADDRESS` should be kept at the default value of `0.0.0.0`. This applies to configurations where the client service (e.g. Homepage) is deployed within the same Docker network as Ragnar API Proxy, as well as configurations where the client service is deployed outside the Docker network.
 
 > [!NOTE]
 > **This listen address applies only to the Flask app running inside the Docker container. The listen address of the Docker container is specified in the Compose file via the `expose` or `ports` attributes (next section).**
@@ -131,8 +131,23 @@ By default, the container will listen only on `localhost`, which is preferred wh
 compose-standalone.yml
 ```
 
+#### Step 4: Start Ragnar API Proxy
+
+Create and start the service using Docker Compose.
+
+```bash
+docker compose up -d
+```
+
 ### Method 2: Build from Source
 
 ## Configuration
 
 ### Homepage
+
+### Other Services
+
+Currently, official configuration documentation only exists for Homepage, but Ragnar API Proxy is compatible with any service that uses HTTP Basic Auth headers to access external APIs. The high-level configuration steps are as follows:
+
+1. Point the service to Ragnar API Proxy's endpoint
+    - Default: `http://ragnar.example.org:8000/proxy`
