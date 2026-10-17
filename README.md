@@ -141,7 +141,8 @@ services:
     volumes:
       - /path/to/config:/app/config # Make sure your local config directory exists
       - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
-    restart: unless-stopped```
+    restart: unless-stopped
+```
 
 For standalone deployment, copy the `compose-standalone.yml` example.
 
