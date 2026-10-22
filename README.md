@@ -58,7 +58,7 @@ cd /opt/ragnar-api-proxy
 #### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/jark-dev/ragnar-api-proxy.git
+git clone https://github.com/jark-dev/ragnar-api-proxy.git .
 ```
 
 #### Step 2: Configure Environment Variables
@@ -186,7 +186,7 @@ cd /opt/ragnar-api-proxy
 #### Step 1: Clone Repository to Working Directory
 
 ```bash
-git clone https://github.com/jark-dev/ragnar-api-proxy.git
+git clone https://github.com/jark-dev/ragnar-api-proxy.git .
 ```
 
 #### Step 2: Create and Activate Virtual Environment
