@@ -277,7 +277,7 @@ After=network.target
 User=your-username
 Group=your-username
 WorkingDirectory=/path/to/ragnar-api-proxy
-ExecStart=/path/to/ragnar-api-proxy/.venv/bin/gunicorn --config /path/to/ragnar-api-proxy/gunicorn.conf.py "src.app:create_app()"
+ExecStart=/path/to/ragnar-api-proxy/.venv/bin/gunicorn --config /path/to/ragnar-api-proxy/gunicorn.conf.py --no-control-socket "src.app:create_app()"
 Restart=always
 
 [Install]
